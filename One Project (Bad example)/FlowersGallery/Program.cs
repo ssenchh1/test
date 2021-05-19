@@ -21,6 +21,16 @@ namespace FlowersGallery
 
             List<Flower> flowers = new List<Flower>();
             List<string> rawData = File.ReadLines("flowers.csv").ToList();
+            List<string> storesRawData = File.ReadAllLines("stores.csv").ToList();
+
+            var stores = storesRawData.Select(store => store.Split(","))
+                .Select(store => new Store
+                {
+                    Id = int.Parse(store[0]),
+                    Name = store[1],
+                    Address = store[2]
+                }).ToList();
+
             flowers.AddRange(rawData.Select(d => d.Split(","))
                 .Select(flowerData =>
                     new Flower
@@ -29,7 +39,8 @@ namespace FlowersGallery
                         Name = flowerData[1],
                         Description = flowerData[2],
                         Type = flowerData[3],
-                        ImagePath = flowerData[4]
+                        ImagePath = flowerData[4],
+                        Store = stores.FirstOrDefault(s => s.Id == int.Parse(flowerData[5]))
                     }));
 
             string command;
@@ -39,36 +50,44 @@ namespace FlowersGallery
                 switch (command)
                 {
                     case "add":
-                    {
-                        Flower newFlower = new Flower {Id = flowers.Count + 1};
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.WriteLine("Enter flower name");
-                        Console.ForegroundColor = ConsoleColor.White;
-                        newFlower.Name = Console.ReadLine();
+                        {
+                            Flower newFlower = new Flower { Id = flowers.Count + 1 };
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            Console.WriteLine("Enter flower name");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            newFlower.Name = Console.ReadLine();
 
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.WriteLine("Enter flower description");
-                        Console.ForegroundColor = ConsoleColor.White;
-                        newFlower.Description = Console.ReadLine();
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            Console.WriteLine("Enter flower description");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            newFlower.Description = Console.ReadLine();
 
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.WriteLine("Enter flower type");
-                        Console.ForegroundColor = ConsoleColor.White;
-                        newFlower.Type = Console.ReadLine();
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            Console.WriteLine("Enter flower type");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            newFlower.Type = Console.ReadLine();
 
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.WriteLine("Enter flower image path");
-                        Console.ForegroundColor = ConsoleColor.White;
-                        newFlower.ImagePath = Console.ReadLine();
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            Console.WriteLine("Enter flower image path");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            newFlower.ImagePath = Console.ReadLine();
 
-                        flowers.Add(newFlower);
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            Console.WriteLine($"Enter flower store id from the list ({string.Concat(stores.Select(s => $"ID: {s.Id} Name: {s.Name}"))})");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            int storeId = int.Parse(Console.ReadLine());
+                            newFlower.Store = stores.FirstOrDefault(s => s.Id == storeId);
 
-                        string csvFlowerMapping =
-                            $"{newFlower.Id},{newFlower.Name},{newFlower.Description},{newFlower.Type},{newFlower.ImagePath}";
-                        using StreamWriter writer = File.AppendText("flowers.csv");
-                        writer.WriteLine(csvFlowerMapping);
-                        break;
-                    }
+                            flowers.Add(newFlower);
+
+                            string csvFlowerMapping =
+                                $"{newFlower.Id},{newFlower.Name},{newFlower.Description},{newFlower.Type},{newFlower.ImagePath}";
+                            using StreamWriter writer = File.AppendText("flowers.csv");
+                            writer.Write(',');
+                            writer.Write('\n');
+                            writer.WriteLine(csvFlowerMapping);
+                            break;
+                        }
                     case "show":
                         Console.ForegroundColor = ConsoleColor.Yellow;
                         Console.WriteLine("Enter flower id");
@@ -76,7 +95,7 @@ namespace FlowersGallery
                         if (isInt)
                         {
                             Flower flower = flowers.Find(f => f.Id == id);
-                            if(flower == null)
+                            if (flower == null)
                             {
                                 Console.WriteLine("No such flower found, please add one");
                                 break;
